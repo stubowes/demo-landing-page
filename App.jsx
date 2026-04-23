@@ -446,6 +446,7 @@ export default function App() {
   }
 
   function handleVideoEnded() {
+    setIsPlaying(false)
     fireWebhook(slug, 'video_complete')
   }
 
@@ -509,6 +510,7 @@ export default function App() {
             playsInline
             preload="metadata"
             onEnded={handleVideoEnded}
+            controls={isPlaying}
           />
           {!isPlaying && (
             <div className="play-overlay" onClick={handlePlay}>
