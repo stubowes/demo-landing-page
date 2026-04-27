@@ -432,10 +432,13 @@ export default function App() {
   const [trialRequested, setTrialRequested] = useState(false)
   const [trialLoading, setTrialLoading] = useState(false)
 
-  // Fire page view on mount
+  // Update document title and fire page view on mount
   useEffect(() => {
+    if (businessName) {
+      document.title = `${businessName} Demo`
+    }
     if (slug) fireWebhook(slug, 'page_view')
-  }, [slug])
+  }, [slug, businessName])
 
   function handlePlay() {
     const video = videoRef.current
