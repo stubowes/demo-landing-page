@@ -1,5 +1,12 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/render" }
+    {
+      "source": "/api/webhook",
+      "destination": "https://seachangeai.app.n8n.cloud/webhook/demo-cta"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/render"
+    }
   ]
 }
