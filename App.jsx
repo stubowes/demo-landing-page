@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from 'react'
    ─────────────────────────────────────────── */
 const CONFIG = {
   videoBaseUrl: 'https://demos.seachangeai.co/demos',
-  webhookUrl: 'https://seachangeai.app.n8n.cloud/webhook/demo-cta', // Replace with your n8n webhook
+  webhookUrl: '/api/webhook', // Replace with your n8n webhook
   calBookingUrl: 'https://cal.com/seachangeai/discovery', // Replace with your Cal.com link
   demophone: '08081607030',
 }
