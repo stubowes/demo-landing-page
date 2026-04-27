@@ -43,6 +43,27 @@ function fireWebhook(slug, event, extra = {}) {
   }
 }
 
+// Like fireWebhook, but uses sendBeacon so the request survives page unload.
+// Falls back to fetch with keepalive if sendBeacon isn't available.
+function fireWebhookBeacon(slug, event, extra = {}) {
+  try {
+    const payload = JSON.stringify({ slug, event, timestamp: Date.now(), ...extra })
+    if (navigator.sendBeacon) {
+      const blob = new Blob([payload], { type: 'application/json' })
+      navigator.sendBeacon(CONFIG.webhookUrl, blob)
+      return
+    }
+    fetch(CONFIG.webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+      keepalive: true,
+    })
+  } catch (e) {
+    // Silent fail
+  }
+}
+
 /* ───────────────────────────────────────────
    STYLES
    ─────────────────────────────────────────── */
@@ -432,6 +453,14 @@ export default function App() {
   const [trialRequested, setTrialRequested] = useState(false)
   const [trialLoading, setTrialLoading] = useState(false)
 
+  // ── Watch-time tracking ──
+  // watchedSecondsRef accumulates seconds the video was actually playing.
+  // lastTickRef holds the timestamp of the last timeupdate while playing.
+  // lastSentRef remembers the last value we reported, so we don't send duplicates.
+  const watchedSecondsRef = useRef(0)
+  const lastTickRef = useRef(null)
+  const lastSentRef = useRef(0)
+
   // Update document title and fire page view on mount
   useEffect(() => {
     if (businessName) {
@@ -439,6 +468,43 @@ export default function App() {
     }
     if (slug) fireWebhook(slug, 'page_view')
   }, [slug, businessName])
+
+  // Send accumulated watch time when the user leaves the page or backgrounds the tab.
+  useEffect(() => {
+    if (!slug) return
+
+    function flushWatchTime(useBeacon = true) {
+      const seconds = Math.round(watchedSecondsRef.current)
+      if (seconds <= lastSentRef.current) return
+      const video = videoRef.current
+      const payload = {
+        watched_seconds: seconds,
+        duration_seconds: video && video.duration ? Math.round(video.duration) : null,
+        furthest_seconds: video ? Math.round(video.currentTime || 0) : null,
+      }
+      if (useBeacon) {
+        fireWebhookBeacon(slug, 'video_watch_time', payload)
+      } else {
+        fireWebhook(slug, 'video_watch_time', payload)
+      }
+      lastSentRef.current = seconds
+    }
+
+    function onVisibilityChange() {
+      if (document.visibilityState === 'hidden') flushWatchTime(true)
+    }
+
+    function onPageHide() {
+      flushWatchTime(true)
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('pagehide', onPageHide)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('pagehide', onPageHide)
+    }
+  }, [slug])
 
   function handlePlay() {
     const video = videoRef.current
@@ -448,9 +514,38 @@ export default function App() {
     fireWebhook(slug, 'video_play')
   }
 
+  // Fired ~4×/sec while the video is playing. We diff against the last tick's
+  // wall-clock time and add the delta — capped to filter out big jumps from
+  // seeks/scrubs, so we only count real playback.
+  function handleVideoTimeUpdate() {
+    const now = Date.now()
+    if (lastTickRef.current != null) {
+      const delta = (now - lastTickRef.current) / 1000
+      if (delta > 0 && delta < 1.5) {
+        watchedSecondsRef.current += delta
+      }
+    }
+    lastTickRef.current = now
+  }
+
+  function handleVideoPlaying() {
+    lastTickRef.current = Date.now()
+  }
+
+  function handleVideoPause() {
+    lastTickRef.current = null
+  }
+
   function handleVideoEnded() {
     setIsPlaying(false)
-    fireWebhook(slug, 'video_complete')
+    lastTickRef.current = null
+    const seconds = Math.round(watchedSecondsRef.current)
+    const video = videoRef.current
+    fireWebhook(slug, 'video_complete', {
+      watched_seconds: seconds,
+      duration_seconds: video && video.duration ? Math.round(video.duration) : null,
+    })
+    lastSentRef.current = seconds
   }
 
   async function handleStartTrial() {
@@ -513,6 +608,9 @@ export default function App() {
             playsInline
             preload="metadata"
             onEnded={handleVideoEnded}
+            onTimeUpdate={handleVideoTimeUpdate}
+            onPlaying={handleVideoPlaying}
+            onPause={handleVideoPause}
             controls={isPlaying}
           />
           {!isPlaying && (
