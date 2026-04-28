@@ -6,8 +6,8 @@ import { useState, useRef, useEffect } from 'react'
 const CONFIG = {
   videoBaseUrl: 'https://demos.seachangeai.co/demos',
   webhookUrl: '/api/webhook', // Replace with your n8n webhook
-  calBookingUrl: 'https://cal.com/seachangeai/discovery', // Replace with your Cal.com link
-  demophone: '08081607030',
+  calBookingUrl: 'https://cal.com/stuart-bowes-jv4zse/callback?overlayCalendar=true', // Replace with your Cal.com link
+  demophone: '+448081607030',
 }
 
 /* ───────────────────────────────────────────
