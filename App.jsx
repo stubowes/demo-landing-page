@@ -272,6 +272,24 @@ const styles = `
     box-shadow: none;
   }
 
+  .cta-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--surface);
+    color: var(--slate);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .cta-input::placeholder { color: var(--muted); }
+  .cta-input:focus { border-color: var(--ocean); box-shadow: 0 0 0 3px var(--ocean-glow); }
+  .cta-input:disabled { opacity: 0.6; cursor: not-allowed; }
+  .cta-input-error { border-color: #ef4444; }
+  .cta-input-error:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25); }
+
   .cta-secondary {
     display: flex;
     align-items: center;
@@ -452,6 +470,8 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [trialRequested, setTrialRequested] = useState(false)
   const [trialLoading, setTrialLoading] = useState(false)
+  const [trialName, setTrialName] = useState('')
+  const [trialNameError, setTrialNameError] = useState(false)
 
   // ── Watch-time tracking ──
   // watchedSecondsRef accumulates seconds the video was actually playing.
@@ -548,9 +568,16 @@ export default function App() {
     lastSentRef.current = seconds
   }
 
-  async function handleStartTrial() {
+  async function handleStartTrial(e) {
+    if (e) e.preventDefault()
+    const name = trialName.trim()
+    if (!name) {
+      setTrialNameError(true)
+      return
+    }
+    setTrialNameError(false)
     setTrialLoading(true)
-    fireWebhook(slug, 'cta_click', { action: 'start_free_trial' })
+    fireWebhook(slug, 'cta_click', { action: 'start_free_trial', name })
     // Brief delay so the webhook fires before state change
     await new Promise(r => setTimeout(r, 600))
     setTrialLoading(false)
@@ -632,20 +659,34 @@ export default function App() {
               <div className="confirmation-tick">
                 <TickIcon />
               </div>
-              <h3>You're all set</h3>
-              <p>Stuart will give you a call shortly to get your AI receptionist up and running.</p>
+              <h3>Thanks, {trialName.trim().split(/\s+/)[0]}!</h3>
+              <p>Stuart will call you shortly to get your AI receptionist up and running.</p>
             </div>
           ) : (
-            <div className="cta-group">
+            <form className="cta-group" onSubmit={handleStartTrial} noValidate>
               <p className="cta-label">Stop Losing Revenue!</p>
+              <input
+                type="text"
+                className={`cta-input${trialNameError ? ' cta-input-error' : ''}`}
+                placeholder="Your name"
+                value={trialName}
+                onChange={e => {
+                  setTrialName(e.target.value)
+                  if (trialNameError) setTrialNameError(false)
+                }}
+                disabled={trialLoading}
+                autoComplete="name"
+                aria-label="Your name"
+                aria-invalid={trialNameError}
+              />
               <button
+                type="submit"
                 className="cta-primary"
-                onClick={handleStartTrial}
                 disabled={trialLoading}
               >
                 {trialLoading ? 'Sending...' : 'Request Your Free Trial'}
               </button>
-            </div>
+            </form>
           )}
 
           <div className="divider">
