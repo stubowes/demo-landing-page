@@ -240,6 +240,11 @@ const styles = `
     margin-bottom: 0;
     text-align: center;
   }
+  .cta-label-hero {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ocean);
+  }
 
   .cta-primary {
     display: flex;
@@ -704,7 +709,7 @@ export default function App() {
             </div>
           ) : (
             <form className="cta-group" onSubmit={handleStartTrial} noValidate>
-              <p className="cta-label">Stop Losing Revenue!</p>
+              <p className="cta-label cta-label-hero">Stop Losing Revenue!</p>
               <input
                 type="text"
                 className={`cta-input${trialNameError ? ' cta-input-error' : ''}`}
@@ -733,7 +738,7 @@ export default function App() {
                 aria-label="Your email"
                 aria-invalid={trialEmailError}
               />
-              <p className="cta-helper">so I can send your setup link by both text and email — your choice.</p>
+              <p className="cta-helper">I'll send your setup link by both text and email</p>
               <button
                 type="submit"
                 className="cta-primary"
@@ -741,7 +746,7 @@ export default function App() {
               >
                 {trialLoading ? 'Sending...' : 'Request Your Free Trial'}
               </button>
-              <p className="trust-strip">Live in 48 hrs · No setup fee · 14-day free trial · No contract.</p>
+              <p className="trust-strip">Live in 48 hrs · No card needed · No contract · 14-day free trial</p>
               <div className="guarantee-badge">🛡️ Iron-Clad guarantee — if it doesn't book you £3k more in 30 days, full refund.</div>
             </form>
           )}
