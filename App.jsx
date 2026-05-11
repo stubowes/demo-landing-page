@@ -704,8 +704,8 @@ export default function App() {
               <div className="confirmation-tick">
                 <TickIcon />
               </div>
-              <h3>Cheers {trialName.trim().split(/\s+/)[0]} —</h3>
-              <p>shortly I'll send you a setup form by both text and email, pre-filled with details I've pulled from your website. Have a quick scan, fill in anything I've missed, and your AI receptionist will be live within 48 hours of you confirming. After that, I'll help you swap your new number onto Google, your website and anywhere else it needs updating.</p>
+              <h3>Thanks {trialName.trim().split(/\s+/)[0]}!</h3>
+              <p>shortly I'll send you a setup form by text and email, pre-filled with details I've gathered about your business. Have a quick look, make any changes you'd like, and your AI receptionist will be live within 48 hours of you confirming. After that, I'll help you swap your new number onto Google, your website and anywhere else it needs updating.</p>
             </div>
           ) : (
             <form className="cta-group" onSubmit={handleStartTrial} noValidate>
@@ -738,7 +738,6 @@ export default function App() {
                 aria-label="Your email"
                 aria-invalid={trialEmailError}
               />
-              <p className="cta-helper">I'll send your setup link by both text and email</p>
               <button
                 type="submit"
                 className="cta-primary"
@@ -746,6 +745,7 @@ export default function App() {
               >
                 {trialLoading ? 'Sending...' : 'Request Your Free Trial'}
               </button>
+              <p className="cta-helper">I'll send your setup link by both text and email</p>
               <p className="trust-strip">Live in 48 hrs · No card needed · No contract · 14-day free trial</p>
               <div className="guarantee-badge">🛡️ Iron-Clad guarantee — if it doesn't book you £3k more in 30 days, full refund.</div>
             </form>
