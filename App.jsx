@@ -407,6 +407,7 @@ const styles = `
     opacity: 0.8;
     line-height: 1.5;
   }
+  .confirmation p + p { margin-top: 12px; }
 
   /* ── Divider ── */
   .divider {
@@ -705,7 +706,8 @@ export default function App() {
                 <TickIcon />
               </div>
               <h3>Thanks {trialName.trim().split(/\s+/)[0]}!</h3>
-              <p>shortly I'll send you a setup form by text and email, pre-filled with details I've gathered about your business. Have a quick look, make any changes you'd like, and your AI receptionist will be live within 48 hours of you confirming. After that, I'll help you swap your new number onto Google, your website and anywhere else it needs updating.</p>
+              <p>Shortly I'll send you a setup form by text and email, pre-filled with details I've gathered about your business. Have a quick look, make any changes you'd like, and your AI receptionist will be live within 48 hours of you confirming. After that, I'll help you swap your new number onto Google, your website and anywhere else it needs updating.</p>
+              <p>Feel free to book a quick call back if you have any questions.</p>
             </div>
           ) : (
             <form className="cta-group" onSubmit={handleStartTrial} noValidate>
