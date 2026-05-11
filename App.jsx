@@ -290,6 +290,41 @@ const styles = `
   .cta-input-error { border-color: #ef4444; }
   .cta-input-error:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25); }
 
+  .cta-helper {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--muted);
+    text-align: center;
+    margin-top: -4px;
+  }
+
+  /* ── Trust signals ── */
+  .trust-strip {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--ocean);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.5;
+    margin-top: 2px;
+  }
+
+  .guarantee-badge {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.28);
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--slate);
+    text-align: center;
+  }
+
   .cta-secondary {
     display: flex;
     align-items: center;
@@ -472,6 +507,8 @@ export default function App() {
   const [trialLoading, setTrialLoading] = useState(false)
   const [trialName, setTrialName] = useState('')
   const [trialNameError, setTrialNameError] = useState(false)
+  const [trialEmail, setTrialEmail] = useState('')
+  const [trialEmailError, setTrialEmailError] = useState(false)
 
   // ── Watch-time tracking ──
   // watchedSecondsRef accumulates seconds the video was actually playing.
@@ -571,13 +608,16 @@ export default function App() {
   async function handleStartTrial(e) {
     if (e) e.preventDefault()
     const name = trialName.trim()
-    if (!name) {
-      setTrialNameError(true)
-      return
-    }
+    const email = trialEmail.trim()
+    const emailValid = email.length > 0 && email.includes('@')
+    let invalid = false
+    if (!name) { setTrialNameError(true); invalid = true }
+    if (!emailValid) { setTrialEmailError(true); invalid = true }
+    if (invalid) return
     setTrialNameError(false)
+    setTrialEmailError(false)
     setTrialLoading(true)
-    fireWebhook(slug, 'cta_click', { action: 'start_free_trial', name })
+    fireWebhook(slug, 'cta_click', { action: 'start_free_trial', name, email })
     // Brief delay so the webhook fires before state change
     await new Promise(r => setTimeout(r, 600))
     setTrialLoading(false)
@@ -659,8 +699,8 @@ export default function App() {
               <div className="confirmation-tick">
                 <TickIcon />
               </div>
-              <h3>Thanks, {trialName.trim().split(/\s+/)[0]}!</h3>
-              <p>Stuart will call you shortly to get your AI receptionist up and running.</p>
+              <h3>Cheers {trialName.trim().split(/\s+/)[0]} —</h3>
+              <p>shortly I'll send you a setup form by both text and email, pre-filled with details I've pulled from your website. Have a quick scan, fill in anything I've missed, and your AI receptionist will be live within 48 hours of you confirming. After that, I'll help you swap your new number onto Google, your website and anywhere else it needs updating.</p>
             </div>
           ) : (
             <form className="cta-group" onSubmit={handleStartTrial} noValidate>
@@ -679,6 +719,21 @@ export default function App() {
                 aria-label="Your name"
                 aria-invalid={trialNameError}
               />
+              <input
+                type="email"
+                className={`cta-input${trialEmailError ? ' cta-input-error' : ''}`}
+                placeholder="Your email"
+                value={trialEmail}
+                onChange={e => {
+                  setTrialEmail(e.target.value)
+                  if (trialEmailError) setTrialEmailError(false)
+                }}
+                disabled={trialLoading}
+                autoComplete="email"
+                aria-label="Your email"
+                aria-invalid={trialEmailError}
+              />
+              <p className="cta-helper">so I can send your setup link by both text and email — your choice.</p>
               <button
                 type="submit"
                 className="cta-primary"
@@ -686,6 +741,8 @@ export default function App() {
               >
                 {trialLoading ? 'Sending...' : 'Request Your Free Trial'}
               </button>
+              <p className="trust-strip">Live in 48 hrs · No setup fee · 14-day free trial · No contract.</p>
+              <div className="guarantee-badge">🛡️ Iron-Clad guarantee — if it doesn't book you £3k more in 30 days, full refund.</div>
             </form>
           )}
 
