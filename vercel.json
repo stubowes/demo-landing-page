@@ -5,6 +5,10 @@
       "destination": "https://seachangeai.app.n8n.cloud/webhook/demo-cta"
     },
     {
+      "source": "/api/eligibility",
+      "destination": "https://seachangeai.app.n8n.cloud/webhook/eligibility"
+    },
+    {
       "source": "/(.*)",
       "destination": "/api/render"
     }

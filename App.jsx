@@ -294,6 +294,14 @@ const styles = `
   .cta-input:disabled { opacity: 0.6; cursor: not-allowed; }
   .cta-input-error { border-color: #ef4444; }
   .cta-input-error:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25); }
+  .cta-error-message {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: #ef4444;
+    text-align: left;
+    margin-top: -8px;
+  }
 
   .cta-helper {
     font-family: var(--font-body);
@@ -623,6 +631,24 @@ export default function App() {
     setTrialNameError(false)
     setTrialEmailError(false)
     setTrialLoading(true)
+
+    let eligibility
+    try {
+      const resp = await fetch('/api/eligibility', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      eligibility = await resp.json()
+    } catch (err) {
+      eligibility = { eligible: true }
+    }
+    if (eligibility && eligibility.eligible === false) {
+      setTrialEmailError("It looks like this email address has already started a trial with us. If you think this is wrong, please email stuart@seachangeai.co.")
+      setTrialLoading(false)
+      return
+    }
+
     fireWebhook(slug, 'cta_click', { action: 'start_free_trial', name, email })
     // Brief delay so the webhook fires before state change
     await new Promise(r => setTimeout(r, 600))
@@ -738,8 +764,11 @@ export default function App() {
                 disabled={trialLoading}
                 autoComplete="email"
                 aria-label="Your email"
-                aria-invalid={trialEmailError}
+                aria-invalid={!!trialEmailError}
               />
+              {typeof trialEmailError === 'string' && (
+                <p className="cta-error-message" role="alert">{trialEmailError}</p>
+              )}
               <button
                 type="submit"
                 className="cta-primary"
