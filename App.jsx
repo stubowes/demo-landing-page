@@ -31,6 +31,12 @@ function slugToDisplayName(slug) {
     .join(' ')
 }
 
+// Lightweight web-address check. Accepts optional http(s)://, optional www.,
+// and a domain with at least one dot and a 2+ letter TLD. Path is optional.
+function isValidWebsite(value) {
+  return /^(https?:\/\/)?([\w-]+\.)+[a-z]{2,}(\/[^\s]*)?$/i.test(value.trim())
+}
+
 function fireWebhook(slug, event, extra = {}) {
   try {
     fetch(CONFIG.webhookUrl, {
@@ -523,6 +529,8 @@ export default function App() {
   const [trialNameError, setTrialNameError] = useState(false)
   const [trialEmail, setTrialEmail] = useState('')
   const [trialEmailError, setTrialEmailError] = useState(false)
+  const [trialWebsite, setTrialWebsite] = useState('')
+  const [trialWebsiteError, setTrialWebsiteError] = useState(false)
 
   // ── Watch-time tracking ──
   // watchedSecondsRef accumulates seconds the video was actually playing.
@@ -539,6 +547,21 @@ export default function App() {
     }
     if (slug) fireWebhook(slug, 'page_view')
   }, [slug, businessName])
+
+  // Pre-fill website from the lead record so the user can confirm or correct it.
+  useEffect(() => {
+    if (!slug) return
+    let cancelled = false
+    fetch(`/api/lead?slug=${encodeURIComponent(slug)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (cancelled || !data) return
+        const website = typeof data.website === 'string' ? data.website.trim() : ''
+        if (website) setTrialWebsite(website)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [slug])
 
   // Send accumulated watch time when the user leaves the page or backgrounds the tab.
   useEffect(() => {
@@ -623,13 +646,17 @@ export default function App() {
     if (e) e.preventDefault()
     const name = trialName.trim()
     const email = trialEmail.trim()
+    const website = trialWebsite.trim()
     const emailValid = email.length > 0 && email.includes('@')
+    const websiteValid = website.length === 0 || isValidWebsite(website)
     let invalid = false
     if (!name) { setTrialNameError(true); invalid = true }
     if (!emailValid) { setTrialEmailError(true); invalid = true }
+    if (!websiteValid) { setTrialWebsiteError(true); invalid = true }
     if (invalid) return
     setTrialNameError(false)
     setTrialEmailError(false)
+    setTrialWebsiteError(false)
     setTrialLoading(true)
 
     let eligibility
@@ -649,7 +676,7 @@ export default function App() {
       return
     }
 
-    fireWebhook(slug, 'cta_click', { action: 'start_free_trial', name, email })
+    fireWebhook(slug, 'cta_click', { action: 'start_free_trial', name, email, website })
     // Brief delay so the webhook fires before state change
     await new Promise(r => setTimeout(r, 600))
     setTrialLoading(false)
@@ -768,6 +795,24 @@ export default function App() {
               />
               {typeof trialEmailError === 'string' && (
                 <p className="cta-error-message" role="alert">{trialEmailError}</p>
+              )}
+              <input
+                type="url"
+                className={`cta-input${trialWebsiteError ? ' cta-input-error' : ''}`}
+                placeholder="Your website (optional)"
+                value={trialWebsite}
+                onChange={e => {
+                  setTrialWebsite(e.target.value)
+                  if (trialWebsiteError) setTrialWebsiteError(false)
+                }}
+                disabled={trialLoading}
+                autoComplete="url"
+                inputMode="url"
+                aria-label="Your website (optional)"
+                aria-invalid={trialWebsiteError}
+              />
+              {trialWebsiteError && (
+                <p className="cta-error-message" role="alert">Please enter a valid web address (e.g. www.example.com).</p>
               )}
               <button
                 type="submit"
