@@ -6,7 +6,11 @@
     },
     {
       "source": "/api/eligibility",
-      "destination": "https://seachangeai.app.n8n.cloud/webhook/eligibility"
+      "destination": "/api/eligibility"
+    },
+    {
+      "source": "/api/lead",
+      "destination": "/api/lead"
     },
     {
       "source": "/(.*)",
