@@ -659,6 +659,7 @@ export default function App() {
     setTrialWebsiteError(false)
     setTrialLoading(true)
 
+    let eligibilityOk = false
     let eligibility
     try {
       const resp = await fetch('/api/eligibility', {
@@ -666,11 +667,15 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
-      eligibility = await resp.json()
+      eligibility = await resp.json().catch(() => null)
+      eligibilityOk = resp.ok
+      if (!eligibilityOk || !eligibility || typeof eligibility.eligible !== 'boolean') {
+        console.warn('eligibility precheck unverified', { status: resp.status, body: eligibility })
+      }
     } catch (err) {
-      eligibility = { eligible: true }
+      console.warn('eligibility precheck failed', err)
     }
-    if (eligibility && eligibility.eligible === false) {
+    if (eligibilityOk && eligibility && eligibility.eligible === false) {
       setTrialEmailError("It looks like this email address has already started a trial with us. If you think this is wrong, please email stuart@seachangeai.co.")
       setTrialLoading(false)
       return
