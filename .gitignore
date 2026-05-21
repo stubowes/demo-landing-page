@@ -1,5 +1,7 @@
 node_modules/
 dist/
+api/_document.html
+.claude/
 .DS_Store
 .env
 .env.local
