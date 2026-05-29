@@ -742,7 +742,7 @@ export default function App() {
           {businessName} <span>Demo</span>
         </h1>
         <p className="subheading">
-          Stop Losing Work!
+          Stop losing work and pocket £3k+ more per month!
         </p>
 
         {/* Video */}
