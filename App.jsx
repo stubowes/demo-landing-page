@@ -251,6 +251,17 @@ const styles = `
     font-weight: 700;
     color: var(--ocean);
   }
+  .cta-sublabel {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--muted);
+    text-align: center;
+    margin-top: -6px;
+    margin-bottom: 4px;
+  }
+  .cta-sublabel strong { font-weight: 700; color: var(--white); }
 
   .cta-primary {
     display: flex;
@@ -333,15 +344,18 @@ const styles = `
 
   .guarantee-badge {
     width: 100%;
-    padding: 10px 14px;
-    background: rgba(251, 191, 36, 0.08);
-    border: 1px solid rgba(251, 191, 36, 0.28);
-    border-radius: 10px;
+    padding: 20px 22px;
+    background: rgba(251, 191, 36, 0.22);
+    border: 2px solid rgba(251, 191, 36, 0.8);
+    border-radius: 14px;
+    box-shadow: 0 0 0 5px rgba(251, 191, 36, 0.12), 0 8px 24px rgba(251, 191, 36, 0.18);
     font-family: var(--font-body);
-    font-size: 0.8rem;
-    line-height: 1.4;
-    color: var(--slate);
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--white);
     text-align: center;
+    margin-top: 10px;
   }
 
   .cta-secondary {
@@ -728,7 +742,7 @@ export default function App() {
           {businessName} <span>Demo</span>
         </h1>
         <p className="subheading">
-          Meet Your AI Receptionist
+          Stop Losing Work!
         </p>
 
         {/* Video */}
@@ -764,12 +778,13 @@ export default function App() {
                 <TickIcon />
               </div>
               <h3>Thanks {trialName.trim().split(/\s+/)[0]}!</h3>
-              <p>Shortly I'll send you a setup form by text and email, pre-filled with details I've gathered about your business. Have a quick look, make any changes you'd like, and your AI receptionist will be live within 48 hours of you confirming. After that, I'll help you swap your new number onto Google, your website and anywhere else it needs updating.</p>
+              <p>Shortly I'll send you a setup form, pre-filled with details I've gathered about your business. Have a quick look, make any changes you'd like, and your AI receptionist will be live within 48 hours of you confirming. After that, I'll help you swap your new number onto Google, your website and anywhere else it needs updating.</p>
               <p>Feel free to book a quick call back if you have any questions.</p>
             </div>
           ) : (
             <form className="cta-group" onSubmit={handleStartTrial} noValidate>
-              <p className="cta-label cta-label-hero">Stop Losing Revenue!</p>
+              <p className="cta-label cta-label-hero">Claim Your 14-Day Free Trial</p>
+              <p className="cta-sublabel">No card required. After that, plans start from <strong>£279/mon</strong>. Cancel anytime.</p>
               <input
                 type="text"
                 className={`cta-input${trialNameError ? ' cta-input-error' : ''}`}
@@ -826,8 +841,7 @@ export default function App() {
               >
                 {trialLoading ? 'Sending...' : 'Request Your Free Trial'}
               </button>
-              <p className="cta-helper">I'll send your setup link by both text and email</p>
-              <p className="trust-strip">Live in 48 hrs · No card needed · No contract · 14-day free trial</p>
+              <p className="trust-strip">LIVE IN 48 HOURS</p>
               <div className="guarantee-badge">🛡️ Iron-Clad guarantee — if it doesn't book you £3k more in 30 days, full refund.</div>
             </form>
           )}
