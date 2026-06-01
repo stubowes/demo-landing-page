@@ -166,7 +166,7 @@ const styles = `
     border-radius: 14px;
     overflow: hidden;
     background: #000;
-    aspect-ratio: 8 / 9;
+    aspect-ratio: 9 / 16;
     margin-bottom: 32px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(240, 244, 248, 0.05);
