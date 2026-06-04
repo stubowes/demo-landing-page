@@ -31,6 +31,19 @@ function slugToDisplayName(slug) {
     .join(' ')
 }
 
+// Resolve the video URL for the page. Prefer the lead's stored video_url —
+// it's canonical, cache-busted, and independent of the slug, so a collision-
+// disambiguated slug (e.g. "acme-roofing-1234") still loads the right file.
+// Fall back to the slug-derived path. Normalises a scheme-less stored value to
+// https and ignores non-video values like the 'error' sentinel.
+function resolveVideoUrl(stored, slug) {
+  const fallback = `${CONFIG.videoBaseUrl}/${slug}.mp4`
+  if (typeof stored !== 'string') return fallback
+  const trimmed = stored.trim()
+  if (!trimmed || trimmed === 'error' || !/\.mp4(\?|$)/i.test(trimmed)) return fallback
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+}
+
 // Lightweight web-address check. Accepts optional http(s)://, optional www.,
 // and a domain with at least one dot and a 2+ letter TLD. Path is optional.
 function isValidWebsite(value) {
@@ -532,8 +545,15 @@ const CalendarIcon = () => (
    ─────────────────────────────────────────── */
 export default function App() {
   const slug = getSlugFromUrl()
-  const businessName = slugToDisplayName(slug)
-  const videoUrl = `${CONFIG.videoBaseUrl}/${slug}.mp4`
+
+  // Video and display name come from the lead record (looked up by slug), so a
+  // collision-disambiguated slug still resolves to the right .mp4 and a clean
+  // business name. Fall back to slug-derived values while the lookup is in
+  // flight or if the record is missing.
+  const [leadVideoUrl, setLeadVideoUrl] = useState('')
+  const [leadBusinessName, setLeadBusinessName] = useState('')
+  const businessName = leadBusinessName || slugToDisplayName(slug)
+  const videoUrl = leadVideoUrl || `${CONFIG.videoBaseUrl}/${slug}.mp4`
 
   const videoRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -554,15 +574,19 @@ export default function App() {
   const lastTickRef = useRef(null)
   const lastSentRef = useRef(0)
 
-  // Update document title and fire page view on mount
+  // Fire the page view exactly once per slug. Kept separate from the title so
+  // that resolving the business name later doesn't re-fire the event.
   useEffect(() => {
-    if (businessName) {
-      document.title = `${businessName} Demo`
-    }
     if (slug) fireWebhook(slug, 'page_view')
-  }, [slug, businessName])
+  }, [slug])
 
-  // Pre-fill website from the lead record so the user can confirm or correct it.
+  // Keep the document title in sync with the resolved business name.
+  useEffect(() => {
+    if (businessName) document.title = `${businessName} Demo`
+  }, [businessName])
+
+  // Pull the lead record (by slug) to resolve the video and business name, and
+  // to pre-fill the website so the user can confirm or correct it.
   useEffect(() => {
     if (!slug) return
     let cancelled = false
@@ -572,6 +596,9 @@ export default function App() {
         if (cancelled || !data) return
         const website = typeof data.website === 'string' ? data.website.trim() : ''
         if (website) setTrialWebsite(website)
+        setLeadVideoUrl(resolveVideoUrl(data.video_url, slug))
+        const companyShortName = typeof data.company_short_name === 'string' ? data.company_short_name.trim() : ''
+        if (companyShortName) setLeadBusinessName(companyShortName)
       })
       .catch(() => {})
     return () => { cancelled = true }
