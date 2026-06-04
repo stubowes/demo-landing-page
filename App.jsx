@@ -50,12 +50,54 @@ function isValidWebsite(value) {
   return /^(https?:\/\/)?([\w-]+\.)+[a-z]{2,}(\/[^\s]*)?$/i.test(value.trim())
 }
 
+// ── Internal-visitor marker ──
+// Lets Stuart suppress his own demo-page activity from the outreach pipeline.
+// Opening any demo page with ?preview=<token> sets a sticky flag in that
+// browser (localStorage); every event then carries internal:true and the n8n
+// "Demo Page Event Tracker" gate drops it — no SMS, no DB writes. Open a demo
+// page with ?preview=off to clear the flag again.
+//
+// This is NOT a security boundary: the bundle is public, so the token is too.
+// The only effect of being flagged is that your own events are ignored, so a
+// leaked token can at worst let someone opt themselves out of tracking.
+const INTERNAL_PREVIEW_TOKEN = 'sc-preview-2026'
+const INTERNAL_FLAG_KEY = 'sc_internal_visitor'
+
+// Resolve the sticky internal flag once at load: honour ?preview=<token> /
+// ?preview=off to set/clear it, then read the persisted value. Guarded so it's
+// inert if window/localStorage is unavailable (e.g. SSR, privacy mode).
+function resolveInternalVisitor() {
+  try {
+    const params = new URLSearchParams(window.location.search)
+    if (params.has('preview')) {
+      const val = (params.get('preview') || '').toLowerCase()
+      if (val === 'off' || val === '0' || val === 'false') {
+        localStorage.removeItem(INTERNAL_FLAG_KEY)
+      } else if (params.get('preview') === INTERNAL_PREVIEW_TOKEN) {
+        localStorage.setItem(INTERNAL_FLAG_KEY, '1')
+      }
+    }
+    return localStorage.getItem(INTERNAL_FLAG_KEY) === '1'
+  } catch (e) {
+    return false
+  }
+}
+
+const IS_INTERNAL_VISITOR = resolveInternalVisitor()
+
+// Build the event body, tagging internal:true when this browser is flagged as
+// an internal previewer. internal goes last so a caller's extra can't unset it.
+function buildEventBody(slug, event, extra) {
+  const base = { slug, event, timestamp: Date.now(), ...extra }
+  return IS_INTERNAL_VISITOR ? { ...base, internal: true } : base
+}
+
 function fireWebhook(slug, event, extra = {}) {
   try {
     fetch(CONFIG.webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug, event, timestamp: Date.now(), ...extra }),
+      body: JSON.stringify(buildEventBody(slug, event, extra)),
     })
   } catch (e) {
     // Silent fail — don't break the page if webhook is down
@@ -66,7 +108,7 @@ function fireWebhook(slug, event, extra = {}) {
 // Falls back to fetch with keepalive if sendBeacon isn't available.
 function fireWebhookBeacon(slug, event, extra = {}) {
   try {
-    const payload = JSON.stringify({ slug, event, timestamp: Date.now(), ...extra })
+    const payload = JSON.stringify(buildEventBody(slug, event, extra))
     if (navigator.sendBeacon) {
       const blob = new Blob([payload], { type: 'application/json' })
       navigator.sendBeacon(CONFIG.webhookUrl, blob)
